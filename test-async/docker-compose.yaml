@@ -1,0 +1,34 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    networks:
+      - network
+    ports:
+      - "55555:55555"
+    environment:
+      DATABASE_URL: host=db port=5432 user=postgres password=p0stgr3s dbname=postgres
+      RUST_BACKTRACE: 1
+      RUST_LOG: test-async=debug
+  db:
+    build:
+      context: .
+      dockerfile: docker/db.Dockerfile
+    restart: always
+    networks:
+      - network
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: p0stgr3s
+      POSTGRES_DB: postgres
+
+volumes:
+  db-data:
+    driver: local
+
+networks:
+  network:
