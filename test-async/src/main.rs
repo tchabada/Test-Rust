@@ -17,12 +17,12 @@ use tokio_postgres::Client;
 
 use tonic::{transport::Server, Request, Response, Status};
 
-pub mod user {
-    tonic::include_proto!("user");
+pub mod user_crud {
+    tonic::include_proto!("user_crud");
 }
 
-use user::{
-    server::{Crud, CrudServer},
+use user_crud::user_crud_server::{UserCrud, UserCrudServer};
+use user_crud::{
     CreateUserReply, CreateUserRequest, DeleteUserReply, Empty, UpdateUserReply, UpdateUserRequest,
     UserReply, UserRequest, Users,
 };
@@ -37,11 +37,11 @@ async fn connect() -> Client {
     client
 }
 
-#[derive(Default)]
-pub struct User {}
+#[derive(Debug, Default)]
+pub struct MyUserCrud {}
 
 #[tonic::async_trait]
-impl Crud for User {
+impl UserCrud for MyUserCrud {
     async fn get_user(&self, request: Request<UserRequest>) -> Result<Response<UserReply>, Status> {
         println!("Got a request: {:#?}", &request);
         let UserRequest { id } = &request.into_inner();
@@ -73,14 +73,14 @@ impl Crud for User {
 
         for row in rows {
             let date_of_birth: NaiveDate = row.get(3);
-            let user = UserReply {
+            let user_crud = UserReply {
                 id: row.get(0),
                 first_name: row.get(1),
                 last_name: row.get(2),
                 date_of_birth: date_of_birth.to_string(),
             };
 
-            v.push(user);
+            v.push(user_crud);
         }
 
         let reply = Users { users: v };
@@ -112,12 +112,12 @@ impl Crud for User {
             .unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             CreateUserReply {
-                message: format!("Fail to create user with id {}.", &user_id),
+                message: format!("Fail to create user_crud with id {}.", &user_id),
             }
         } else {
             CreateUserReply {
                 message: format!(
-                    "Create {} user with id {}.",
+                    "Create {} user_crud with id {}.",
                     &number_of_rows_affected, &user_id
                 ),
             }
@@ -150,11 +150,14 @@ impl Crud for User {
             .unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             UpdateUserReply {
-                message: format!("Fail to update the user with id {}.", id),
+                message: format!("Fail to update the user_crud with id {}.", id),
             }
         } else {
             UpdateUserReply {
-                message: format!("Update {} user with id {}", &number_of_rows_affected, &id),
+                message: format!(
+                    "Update {} user_crud with id {}",
+                    &number_of_rows_affected, &id
+                ),
             }
         };
 
@@ -176,11 +179,11 @@ impl Crud for User {
         let number_of_rows_affected = &client.execute(&stmt, &[&id]).await.unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             DeleteUserReply {
-                message: format!("Fail to delete the user with id {}.", id),
+                message: format!("Fail to delete the user_crud with id {}.", id),
             }
         } else {
             DeleteUserReply {
-                message: format!("Remove the user with id {}.", id),
+                message: format!("Remove the user_crud with id {}.", id),
             }
         };
 
@@ -198,7 +201,7 @@ impl Crud for User {
         let number_of_rows_affected = &client.execute(&stmt, &[]).await.unwrap();
         let reply = DeleteUserReply {
             message: format!(
-                "Remove {} user data from the database.",
+                "Remove {} user_crud data from the database.",
                 number_of_rows_affected
             ),
         };
@@ -210,14 +213,14 @@ impl Crud for User {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::0]:55555".parse().unwrap();
-    let user = User::default();
+    let user_crud = MyUserCrud::default();
 
     let green = Style::new().green();
 
     println!("\nListening at {}", green.apply_to(addr));
 
     Server::builder()
-        .add_service(CrudServer::new(user))
+        .add_service(UserCrudServer::new(user_crud))
         .serve(addr)
         .await?;
 

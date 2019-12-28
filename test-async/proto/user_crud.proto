@@ -1,9 +1,9 @@
 // user.proto
 syntax = "proto3";
 
-package user;
+package user_crud;
 
-service Crud {
+service UserCrud {
   rpc GetUser (UserRequest) returns (UserReply) {}
   rpc ListUsers(Empty) returns (Users) {}
   rpc CreateUser (CreateUserRequest) returns (CreateUserReply) {}
