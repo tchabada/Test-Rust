@@ -73,14 +73,14 @@ impl UserCrud for MyUserCrud {
 
         for row in rows {
             let date_of_birth: NaiveDate = row.get(3);
-            let user_crud = UserReply {
+            let user = UserReply {
                 id: row.get(0),
                 first_name: row.get(1),
                 last_name: row.get(2),
                 date_of_birth: date_of_birth.to_string(),
             };
 
-            v.push(user_crud);
+            v.push(user);
         }
 
         let reply = Users { users: v };
@@ -112,12 +112,12 @@ impl UserCrud for MyUserCrud {
             .unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             CreateUserReply {
-                message: format!("Fail to create user_crud with id {}.", &user_id),
+                message: format!("Fail to create user with id {}.", &user_id),
             }
         } else {
             CreateUserReply {
                 message: format!(
-                    "Create {} user_crud with id {}.",
+                    "Create {} user with id {}.",
                     &number_of_rows_affected, &user_id
                 ),
             }
@@ -150,14 +150,11 @@ impl UserCrud for MyUserCrud {
             .unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             UpdateUserReply {
-                message: format!("Fail to update the user_crud with id {}.", id),
+                message: format!("Fail to update the user with id {}.", id),
             }
         } else {
             UpdateUserReply {
-                message: format!(
-                    "Update {} user_crud with id {}",
-                    &number_of_rows_affected, &id
-                ),
+                message: format!("Update {} user with id {}", &number_of_rows_affected, &id),
             }
         };
 
@@ -179,11 +176,11 @@ impl UserCrud for MyUserCrud {
         let number_of_rows_affected = &client.execute(&stmt, &[&id]).await.unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             DeleteUserReply {
-                message: format!("Fail to delete the user_crud with id {}.", id),
+                message: format!("Fail to delete the user with id {}.", id),
             }
         } else {
             DeleteUserReply {
-                message: format!("Remove the user_crud with id {}.", id),
+                message: format!("Remove the user with id {}.", id),
             }
         };
 
@@ -201,7 +198,7 @@ impl UserCrud for MyUserCrud {
         let number_of_rows_affected = &client.execute(&stmt, &[]).await.unwrap();
         let reply = DeleteUserReply {
             message: format!(
-                "Remove {} user_crud data from the database.",
+                "Remove {} user data from the database.",
                 number_of_rows_affected
             ),
         };
