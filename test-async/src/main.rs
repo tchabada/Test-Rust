@@ -1,5 +1,11 @@
 use console::Style;
+use dotenv::dotenv;
+use std::env;
 
+use bb8::Pool;
+use bb8_postgres::PostgresConnectionManager;
+
+use tokio_postgres::tls::NoTls;
 use tonic::transport::Server;
 
 pub mod user_crud {
@@ -13,7 +19,11 @@ use crate::service::MyUserCrud;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::0]:55555".parse().unwrap();
-    let user_crud = MyUserCrud::default();
+    dotenv().ok();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pg_mgr = PostgresConnectionManager::new_from_stringlike(&database_url, NoTls).unwrap();
+    let pool = Pool::builder().build(pg_mgr).await.unwrap();
+    let user_crud: MyUserCrud = MyUserCrud { pool: pool.clone() };
     let green = Style::new().green();
 
     println!("\nListening at {}", green.apply_to(addr));

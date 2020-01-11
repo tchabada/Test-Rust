@@ -1,44 +1,34 @@
 use chrono::*;
-use dotenv::dotenv;
-use std::env;
 use uuid::Uuid;
 
-use futures::FutureExt;
+use bb8::Pool;
+use bb8_postgres::PostgresConnectionManager;
 
 use tonic::{Request, Response, Status};
 
 use tokio_postgres::tls::NoTls;
-use tokio_postgres::Client;
 
 use crate::user_crud::{
     user_crud_server::UserCrud, CreateUserReply, CreateUserRequest, DeleteUserReply, Empty,
     UpdateUserReply, UpdateUserRequest, UserReply, UserRequest, Users,
 };
 
-async fn connect() -> Client {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await.unwrap();
-    let connection = connection.map(|e| e.unwrap());
-    tokio::spawn(connection);
-
-    client
+#[derive(Debug)]
+pub struct MyUserCrud {
+    pub pool: Pool<PostgresConnectionManager<NoTls>>,
 }
-
-#[derive(Debug, Default)]
-pub struct MyUserCrud {}
 
 #[tonic::async_trait]
 impl UserCrud for MyUserCrud {
     async fn get_user(&self, request: Request<UserRequest>) -> Result<Response<UserReply>, Status> {
         println!("Got a request: {:#?}", &request);
         let UserRequest { id } = &request.into_inner();
-        let client = connect().await;
-        let stmt = client
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection
             .prepare("SELECT * FROM users WHERE id = $1")
             .await
             .unwrap();
-        let rows = &client.query(&stmt, &[&id]).await.unwrap();
+        let rows = &connection.query(&stmt, &[&id]).await.unwrap();
         let row = rows.get(0).unwrap();
         let date_of_birth: NaiveDate = row.get(3);
         let reply = UserReply {
@@ -54,9 +44,9 @@ impl UserCrud for MyUserCrud {
     async fn list_users(&self, request: Request<Empty>) -> Result<Response<Users>, Status> {
         println!("Got a request: {:#?}", &request);
 
-        let client = connect().await;
-        let stmt = client.prepare("SELECT * FROM users").await.unwrap();
-        let rows = &client.query(&stmt, &[]).await.unwrap();
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection.prepare("SELECT * FROM users").await.unwrap();
+        let rows = &connection.query(&stmt, &[]).await.unwrap();
         let mut v: Vec<UserReply> = Vec::new();
 
         for row in rows {
@@ -89,9 +79,9 @@ impl UserCrud for MyUserCrud {
             date_of_birth,
         } = &request.into_inner();
         let serialize_date_of_birth = NaiveDate::parse_from_str(date_of_birth, "%Y-%m-%d").unwrap();
-        let client = connect().await;
-        let stmt = client.prepare("INSERT INTO users (id, first_name, last_name, date_of_birth) VALUES ($1, $2, $3, $4)").await.unwrap();
-        let number_of_rows_affected = &client
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection.prepare("INSERT INTO users (id, first_name, last_name, date_of_birth) VALUES ($1, $2, $3, $4)").await.unwrap();
+        let number_of_rows_affected = &connection
             .execute(
                 &stmt,
                 &[&user_id, &first_name, &last_name, &serialize_date_of_birth],
@@ -127,9 +117,9 @@ impl UserCrud for MyUserCrud {
             date_of_birth,
         } = &request.into_inner();
         let serialize_date_of_birth = NaiveDate::parse_from_str(date_of_birth, "%Y-%m-%d").unwrap();
-        let client = connect().await;
-        let stmt = client.prepare("UPDATE users SET first_name = $2, last_name = $3, date_of_birth = $4 WHERE id = $1").await.unwrap();
-        let number_of_rows_affected = &client
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection.prepare("UPDATE users SET first_name = $2, last_name = $3, date_of_birth = $4 WHERE id = $1").await.unwrap();
+        let number_of_rows_affected = &connection
             .execute(
                 &stmt,
                 &[&id, &first_name, &last_name, &serialize_date_of_birth],
@@ -156,12 +146,12 @@ impl UserCrud for MyUserCrud {
         println!("Got a request: {:#?}", &request);
 
         let UserRequest { id } = &request.into_inner();
-        let client = connect().await;
-        let stmt = client
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection
             .prepare("DELETE FROM users WHERE id = $1")
             .await
             .unwrap();
-        let number_of_rows_affected = &client.execute(&stmt, &[&id]).await.unwrap();
+        let number_of_rows_affected = &connection.execute(&stmt, &[&id]).await.unwrap();
         let reply = if number_of_rows_affected == &(0 as u64) {
             DeleteUserReply {
                 message: format!("Fail to delete the user with id {}.", id),
@@ -181,9 +171,9 @@ impl UserCrud for MyUserCrud {
     ) -> Result<Response<DeleteUserReply>, Status> {
         println!("Got a request: {:#?}", &request);
 
-        let client = connect().await;
-        let stmt = client.prepare("DELETE FROM users").await.unwrap();
-        let number_of_rows_affected = &client.execute(&stmt, &[]).await.unwrap();
+        let connection = self.pool.get().await.unwrap();
+        let stmt = connection.prepare("DELETE FROM users").await.unwrap();
+        let number_of_rows_affected = &connection.execute(&stmt, &[]).await.unwrap();
         let reply = DeleteUserReply {
             message: format!(
                 "Remove {} user data from the database.",
