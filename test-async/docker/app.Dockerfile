@@ -2,7 +2,7 @@
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
 
-FROM rust:latest as cargo-build
+FROM rust:1.40 as cargo-build
 
 RUN apt-get update
 
@@ -47,3 +47,25 @@ RUN chown test-async:test-async test-async
 USER test-async
 
 CMD ["./test-async"]
+
+# FROM rust:latest
+
+# WORKDIR /usr/src/test-async
+
+# COPY Cargo.toml Cargo.toml
+
+# RUN mkdir src/
+
+# RUN echo "fn main() {println!(\"if you see this, the build broke\")}" > src/main.rs
+
+# RUN cargo build --release
+
+# RUN rm -f target/release/deps/test-async*
+
+# COPY . .
+
+# RUN cargo build --release
+
+# RUN cargo install --path .
+
+# CMD ["/usr/local/cargo/bin/test-async"]
