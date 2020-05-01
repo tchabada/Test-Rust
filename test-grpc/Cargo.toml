@@ -1,5 +1,5 @@
 [package]
-name = "test-async"
+name = "test-grpc"
 version = "0.1.0"
 authors = ["Tomas Chabada <tchabada@gmail.com>"]
 edition = "2018"

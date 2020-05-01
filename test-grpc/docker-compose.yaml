@@ -1,9 +1,9 @@
 version: '3'
 services:
-  app:
+  service:
     build:
       context: .
-      dockerfile: docker/app.Dockerfile
+      dockerfile: docker/service.Dockerfile
     networks:
       - network
     ports:
@@ -11,7 +11,7 @@ services:
     environment:
       DATABASE_URL: host=db port=5432 user=postgres password=p0stgr3s dbname=postgres
       RUST_BACKTRACE: 1
-      RUST_LOG: test-async=debug
+      RUST_LOG: test-grpc=debug
   db:
     build:
       context: .

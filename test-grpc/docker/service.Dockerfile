@@ -12,7 +12,7 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 RUN rustup component add rustfmt
 
-WORKDIR /usr/src/test-async
+WORKDIR /usr/src/test-grpc
 
 COPY Cargo.toml Cargo.toml
 
@@ -22,7 +22,7 @@ RUN echo "fn main() {println!(\"if you see this, the build broke\")}" > src/main
 
 RUN RUST_BACKTRACE=1 RUSTFLAGS=-Clinker=musl-gcc cargo build --release --target=x86_64-unknown-linux-musl
 
-RUN rm -f target/x86_64-unknown-linux-musl/release/deps/test-async*
+RUN rm -f target/x86_64-unknown-linux-musl/release/deps/test-grpc*
 
 COPY . .
 
@@ -34,23 +34,23 @@ RUN RUSTFLAGS=-Clinker=musl-gcc cargo build --release --target=x86_64-unknown-li
 
 FROM alpine:latest
 
-RUN addgroup -g 1000 test-async
+RUN addgroup -g 1000 test-grpc
 
-RUN adduser -D -s /bin/sh -u 1000 -G test-async test-async
+RUN adduser -D -s /bin/sh -u 1000 -G test-grpc test-grpc
 
-WORKDIR /home/test-async/bin/
+WORKDIR /home/test-grpc/bin/
 
-COPY --from=cargo-build /usr/src/test-async/target/x86_64-unknown-linux-musl/release/test-async .
+COPY --from=cargo-build /usr/src/test-grpc/target/x86_64-unknown-linux-musl/release/test-grpc .
 
-RUN chown test-async:test-async test-async
+RUN chown test-grpc:test-grpc test-grpc
 
-USER test-async
+USER test-grpc
 
-CMD ["./test-async"]
+CMD ["./test-grpc"]
 
 # FROM rust:latest
 
-# WORKDIR /usr/src/test-async
+# WORKDIR /usr/src/test-grpc
 
 # COPY Cargo.toml Cargo.toml
 
@@ -60,7 +60,7 @@ CMD ["./test-async"]
 
 # RUN cargo build --release
 
-# RUN rm -f target/release/deps/test-async*
+# RUN rm -f target/release/deps/test-grpc*
 
 # COPY . .
 
@@ -68,4 +68,4 @@ CMD ["./test-async"]
 
 # RUN cargo install --path .
 
-# CMD ["/usr/local/cargo/bin/test-async"]
+# CMD ["/usr/local/cargo/bin/test-grpc"]
