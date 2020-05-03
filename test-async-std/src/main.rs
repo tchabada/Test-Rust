@@ -20,6 +20,11 @@ async fn async_test3(input: u32) -> String {
     input.to_string()
 }
 
+async fn async_test4(input: u32, output: Arc<Mutex<Vec<String>>>) {
+    sleep(Duration::from_secs(1)).await;
+    output.lock().await.push(input.to_string());
+}
+
 #[async_std::main]
 async fn main() {
     let now = Instant::now();
@@ -42,5 +47,10 @@ async fn main() {
 
     let result = join_all(numbers.iter().map(|n| async_test3(*n))).await;
     println!("{:?}", result);
+    println!("{} ms", now.elapsed().as_millis());
+
+    let result: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(vec![]));
+    join_all(numbers.iter().map(|n| async_test4(*n, result.clone()))).await;
+    println!("{:?}", result.lock().await);
     println!("{} ms", now.elapsed().as_millis());
 }
