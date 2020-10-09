@@ -18,9 +18,7 @@ impl<T: Ord> AvlTreeSet<T> {
     fn new() -> Self {
         Self { root: None }
     }
-}
 
-impl<T: Ord> AvlTreeSet<T> {
     fn insert(&mut self, value: T) -> bool {
         let mut current_tree = &mut self.root;
 
@@ -150,7 +148,7 @@ fn main() {
         }))
     );
 
-    let mut set = AvlTreeSet::new();
+    set = AvlTreeSet::new();
 
     for i in (1..4 as usize).rev() {
         set.insert(i);
