@@ -4,7 +4,7 @@ use futures::TryStreamExt;
 
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDate;
-use sqlx::{PgPool, Row};
+use sqlx::{Done, PgPool, Row};
 
 use tonic::{Request, Response, Status};
 
@@ -84,7 +84,8 @@ impl UserCrud for MyUserCrud {
         .bind(&serialize_date_of_birth)
         .execute(&self.pool)
         .await
-        .unwrap();
+        .unwrap()
+        .rows_affected();
         let reply = if number_of_rows_affected == 0 {
             CreateUserReply {
                 message: format!("Fail to create user with id {}.", &id),
@@ -120,7 +121,8 @@ impl UserCrud for MyUserCrud {
         .bind(&serialize_date_of_birth)
         .execute(&self.pool)
         .await
-        .unwrap();
+        .unwrap()
+        .rows_affected();
         let reply = if number_of_rows_affected == 0 {
             UpdateUserReply {
                 message: format!("Fail to update the user with id {}.", id),
@@ -145,7 +147,8 @@ impl UserCrud for MyUserCrud {
             .bind(&id)
             .execute(&self.pool)
             .await
-            .unwrap();
+            .unwrap()
+            .rows_affected();
         let reply = if number_of_rows_affected == 0 {
             DeleteUserReply {
                 message: format!("Fail to delete the user with id {}.", id),
@@ -168,7 +171,8 @@ impl UserCrud for MyUserCrud {
         let number_of_rows_affected = sqlx::query("DELETE FROM users")
             .execute(&self.pool)
             .await
-            .unwrap();
+            .unwrap()
+            .rows_affected();
         let reply = DeleteUserReply {
             message: format!(
                 "Remove {} user data from the database.",

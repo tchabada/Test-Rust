@@ -2,7 +2,7 @@
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
 
-# FROM rust:1.43 as cargo-build
+# FROM rust:latest as cargo-build
 
 # RUN apt-get update
 
@@ -48,7 +48,7 @@
 
 # CMD ["./test-grpc"]
 
-FROM rust:1.43
+FROM rust:latest
 
 RUN rustup component add rustfmt
 

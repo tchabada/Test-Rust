@@ -2,7 +2,7 @@ use console::Style;
 use dotenv::dotenv;
 use std::env;
 
-use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 
 use tonic::transport::Server;
 
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let user_crud: MyUserCrud = MyUserCrud {
-        pool: PgPool::new(&database_url).await?.clone(),
+        pool: PgPoolOptions::new().connect(&database_url).await?.clone(),
     };
 
     let green = Style::new().green();
